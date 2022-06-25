@@ -1,0 +1,11 @@
+@import "./include", "./variables";
+@import "./fontawesome/scss/fontawesome.scss";
+@import "./fontawesome/scss/solid.scss";
+@import "./fontawesome/scss/brands.scss";
+
+body {
+    background: $bg-light;
+    color: $text-dark;
+    height: 100vh;
+    line-height: 1;
+}

@@ -1,0 +1,66 @@
+@use "./variables";
+@use "./include";
+@use "./fontawesome/scss/fontawesome.scss";
+@use "./fontawesome/scss/solid.scss";
+@use "./fontawesome/scss/brands.scss";
+
+@function weight($weight-name) {
+    @return map-get(variables.$font-weights, $weight-name);
+}
+
+@mixin flexCenter($direction) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: $direction;
+}
+
+@mixin theme($light-theme: true) {
+    @if $light-theme {
+        background: darken(variables.$primary-color, 100%);
+        color: lighten(variables.$text-dark, 100%);
+    }
+}
+
+@mixin mobile {
+    @media (max-width: variables.$mobile) {
+        @content;
+    }
+}
+
+body {
+    background: variables.$bg-light;
+    color: variables.$text-dark;
+    height: 100vh;
+    line-height: 1;
+}
+a {
+    color: #fff;
+    text-decoration: none;
+}
+
+.home {
+    // @include flexCenter(row);
+    width: 80%;
+    margin: 0 auto;
+    #{&}__products {
+        font-weight: weight(bold);
+        &:hover {
+            color: red;
+        }
+    }
+    #{&}__products2 {
+        @extend .home__products;
+        &:hover {
+            color: variables.$bg-primary;
+        }
+    }
+
+    @include mobile {
+        flex-direction: column;
+    }
+}
+
+.light {
+    @include theme($light-theme: true);
+}
