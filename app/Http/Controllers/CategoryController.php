@@ -50,7 +50,7 @@ class CategoryController extends Controller
     {
         $request->validated();
         $result = $this->category->store( $request->all() );
-        return $this->ReponseStore( $result );
+        return $this->ReponseStore( $result, $result );
     }
 
     /**
@@ -101,9 +101,9 @@ class CategoryController extends Controller
         return $this->ReponseDelete( $result, $id );
     }
 
-    private function ReponseStore( $result )
+    private function ReponseStore( $result, $error )
     {
-        return $result ? response()->json( ['message' => 'thêm thành công'], 200 ) : response()->json( ['message' => 'lỗi thêm'], 400 );
+        return $result ? response()->json( ['message' => 'thêm thành công'], 200 ) : response()->json( ['message' => 'lỗi thêm ' . $error], 400 );
     }
 
     private function ReponseUpdate( $result )

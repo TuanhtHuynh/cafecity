@@ -23,7 +23,7 @@ class Category extends Model
 
     public function getAll( $sort, $sort_direction, $perpage = 5 )
     {
-        return $this->query()->orderBy( $sort, $sort_direction )->paginate( $perpage );
+        return $this->query()->withCount( 'category' )->orderBy( $sort, $sort_direction )->paginate( $perpage );
     }
 
     public function store( $request )

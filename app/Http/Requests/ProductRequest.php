@@ -23,8 +23,9 @@ class ProductRequest extends FormRequest
      */
     public function rules()
     {
+        $productId = $this->route()->parameter( 'product' );
         return [
-            'name'     => 'required|min:5',
+            'name'     => 'required|min:5|unique:products,name' . $productId,
             'price'    => 'required|integer|min:10000',
             'quantily' => 'required|integer|min:1',
         ];

@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductRequest;
-use App\Models\Product;
+use App\Repositories\ProductRepositoryInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    protected $product;
-    public function __construct( Product $product )
+    private $productRepository;
+    public function __construct( ProductRepositoryInterface $productRepository )
     {
-        $this->product = $product;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -19,18 +20,13 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        return $this->product->getAll( 'id', 'DESC' );
-    }
-
-    public function paginated( Request $request )
+    public function index( Request $request )
     {
         $sort = $request->input( 'sort', 'id' );
         $sort_direction = $request->input( 'order', 'desc' );
         $size = $request->input( 'size', 5 );
 
-        $products = $this->product->getAll( $sort, $sort_direction, $size );
+        $products = $this->productRepository->getAll( $sort, $sort_direction, $size );
 
         return response()->json( [
             'sort'      => $sort,
@@ -45,11 +41,19 @@ class ProductController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store( ProductRequest $request )
+    public function store( ProductRequest $productRequest )
     {
-        $request->validated();
-        $result = $this->product->store( $request );
-        return $this->ResponseStore( $result );
+        try {
+            $productRequest->validated();
+            $this->productRepository->store( $productRequest->all() );
+            return response()->json( [
+                'message' => 'đã thêm sản phẩm',
+            ], 200 );
+        } catch ( \Throwable$th ) {
+            return response()->json( [
+                'message' => 'lỗi thêm sản phẩm',
+            ], 400 );
+        }
     }
 
     /**
@@ -60,18 +64,13 @@ class ProductController extends Controller
      */
     public function show( $id )
     {
-        //
-    }
+        try {
+            $product = $this->productRepository->findById( $id );
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit( $id )
-    {
-        //
+            return response()->json( ['prouct' => $product], 200 );
+        } catch ( QueryException $error ) {
+            return response()->json( ['message' => 'lỗi thông tin sản phẩm ' . $id], 404 );
+        }
     }
 
     /**
@@ -83,9 +82,14 @@ class ProductController extends Controller
      */
     public function update( ProductRequest $request, $id )
     {
-        $request->validated();
-        $result = $this->product->findById( $id )->update( $request->all() );
-        return $this->ResponseUpdate( $result );
+        try {
+            $request->validated();
+            $category = $this->productRepository->update( $request->all(), $id );
+
+            response()->json( ['message' => 'đã cập nhật sản phẩm'], 200 );
+        } catch ( QueryException $error ) {
+            response()->json( ['message' => 'lỗi cập nhật sản phẩm', $id], 404 );
+        }
     }
 
     /**
@@ -96,23 +100,11 @@ class ProductController extends Controller
      */
     public function destroy( $id )
     {
-        $result = $this->product->findById( $id )->delete();
-
-        return $this->ResponseDelete( $result, $id );
-    }
-
-    private function ResponseStore( $result )
-    {
-        return $result ? response()->json( ['message' => 'lỗi thêm sản phẩm'], 400 ) : response()->json( ['message' => 'đã thêm sản phẩm'], 201 );
-    }
-
-    private function ResponseUpdate( $result )
-    {
-        return $result ? response()->json( ['message' => 'lỗi cập nhật sản phẩm'], 400 ) : response()->json( ['message' => 'đã cập nhật thông tin sản phẩm'], 200 );
-    }
-
-    private function ResponseDelete( $result, $id )
-    {
-        return $result ? response()->json( ['message' => 'lỗi xoá sản phẩm ' . $id], 400 ) : response()->json( ['message' => 'đã xoá sản phẩm'], 200 );
+        try {
+            $this->productRepository->delete( $id );
+            return response()->json( ['message' => 'đã xoá'], 200 );
+        } catch ( QueryException $error ) {
+            return response()->json( ['message' => 'lỗi xoá ' . $id], 404 );
+        }
     }
 }
