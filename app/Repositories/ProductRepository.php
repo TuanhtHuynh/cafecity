@@ -8,12 +8,12 @@ class ProductRepository implements ProductRepositoryInterface
 {
     public function getAll( $sort, $order, $size )
     {
-        return Product::query()->orderBy( $sort, $order )->paginate( $size );
+        return Product::query()->with( 'category' )->orderBy( $sort, $order )->paginate( $size );
     }
 
     public function store( $product )
     {
-        return Product::query()->create( $product );
+        Product::query()->create( $product );
     }
 
     public function findById( $id )
@@ -29,7 +29,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function update( $request, $id )
     {
         $product = $this->findById( $id );
-        return $product->update( $request );
+        $product->update( $request );
     }
 
     public function delete( $id )

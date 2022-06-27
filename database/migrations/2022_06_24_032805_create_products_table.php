@@ -21,7 +21,7 @@ class CreateProductsTable extends Migration
             $table->integer( 'price' )->default( 1000 );
             $table->boolean( 'actived' )->default( true );
             $table->string( 'cover' )->default( '' );
-            $table->unsignedBigInteger( 'category_id' )->index();
+            $table->unsignedBigInteger( 'category_id' )->default( 1 );
             $table->foreign( 'category_id' )->references( 'id' )->on( 'categories' )->onDelete( 'cascade' );
             $table->timestamps();
         } );

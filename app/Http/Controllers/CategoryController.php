@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CategoryRequest;
-use App\Models\Category;
+use App\Repositories\CategoryRepositoryInterface;
+use Exception;
 use Illuminate\Http\Request;
 
 class CategoryController extends Controller
 {
-    protected $category;
-    public function __construct( Category $category )
+    protected $categoryRepository;
+    public function __construct( CategoryRepositoryInterface $categoryRepository )
     {
-        $this->category = $category;
+        $this->categoryRepository = $categoryRepository;
     }
 
     /**
@@ -19,25 +20,15 @@ class CategoryController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index( Request $request )
     {
-        $categoryList = $this->category->getAll( 'id', 'DESC' );
-        return response()->json( $categoryList, 200 );
-    }
+        $sort = $request->sort;
+        $order = $request->order;
+        $size = $request->size;
 
-    public function paginated( Request $request )
-    {
-        $sort = $request->input( 'sort', 'id' );
-        $sort_direction = $request->input( 'order', 'desc' );
-        $size = $request->input( 'size', 5 );
+        $categories = $this->categoryRepository->getAll( $sort, $order, $size );
 
-        $categories = $this->category->getAll( $sort, $sort_direction, $size );
-
-        return response()->json( [
-            'sort'      => $sort,
-            'direction' => $sort_direction,
-            $categories,
-        ], 200 );
+        return response()->json( ['categories' => $categories] );
     }
 
     /**
@@ -48,9 +39,13 @@ class CategoryController extends Controller
      */
     public function store( CategoryRequest $request )
     {
-        $request->validated();
-        $result = $this->category->store( $request->all() );
-        return $this->ReponseStore( $result, $result );
+        try {
+            $this->categoryRepository->store( $request->validated() );
+
+            return response()->json( ['message' => 'đã thêm danh mục'], 201 );
+        } catch ( Exception $error ) {
+            return response()->json( ['message' => 'lỗi thêm danh mục'], 400 );
+        }
     }
 
     /**
@@ -61,18 +56,13 @@ class CategoryController extends Controller
      */
     public function show( $id )
     {
-        //
-    }
+        try {
+            $category = $this->categoryRepository->findById( $id );
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit( $id )
-    {
-        //
+            return response()->json( ['category' => $category] );
+        } catch ( Exception $error ) {
+            return response()->json( ['message' => 'khong tìm thấy ' . $id] );
+        }
     }
 
     /**
@@ -84,9 +74,8 @@ class CategoryController extends Controller
      */
     public function update( CategoryRequest $request, $id )
     {
-        $request->validated();
-        $result = $this->category->findById( $id )->update( $request->all() );
-        return $this->ReponseUpdate( $result );
+        $this->categoryRepository->update( $request->validated(), $id );
+
     }
 
     /**
@@ -97,22 +86,11 @@ class CategoryController extends Controller
      */
     public function destroy( $id )
     {
-        $result = $this->category->findById( $id )->delete();
-        return $this->ReponseDelete( $result, $id );
-    }
-
-    private function ReponseStore( $result, $error )
-    {
-        return $result ? response()->json( ['message' => 'thêm thành công'], 200 ) : response()->json( ['message' => 'lỗi thêm ' . $error], 400 );
-    }
-
-    private function ReponseUpdate( $result )
-    {
-        return $result ? response()->json( ['message' => 'cập nhật thành công'], 200 ) : response()->json( ['message' => 'lỗi cập nhật'], 400 );
-    }
-
-    private function ReponseDelete( $result, $id )
-    {
-        return $result ? response()->json( ['message' => 'xoá thành công'], 200 ) : response()->json( ['message' => 'lỗi xoá ' . $id], 400 );
+        try {
+            $this->categoryRepository->delete( $id );
+            return response()->json( ['message' => 'đã xoá'], 200 );
+        } catch ( \Exception$error ) {
+            return response()->json( ['message' => 'không tìm thấy ' . $id], 404 );
+        }
     }
 }

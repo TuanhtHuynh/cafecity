@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ProductRequest;
 use App\Repositories\ProductRepositoryInterface;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -44,15 +43,14 @@ class ProductController extends Controller
     public function store( ProductRequest $productRequest )
     {
         try {
-            $productRequest->validated();
-            $this->productRepository->store( $productRequest->all() );
+            $this->productRepository->store( $productRequest->validated() );
             return response()->json( [
                 'message' => 'đã thêm sản phẩm',
-            ], 200 );
-        } catch ( \Throwable$th ) {
+            ], 201 );
+        } catch ( \Exception$error ) {
             return response()->json( [
-                'message' => 'lỗi thêm sản phẩm',
-            ], 400 );
+                'message' => 'lỗi thêm sản phẩm' . $error->getMessage(),
+            ], 500 );
         }
     }
 
@@ -68,7 +66,7 @@ class ProductController extends Controller
             $product = $this->productRepository->findById( $id );
 
             return response()->json( ['prouct' => $product], 200 );
-        } catch ( QueryException $error ) {
+        } catch ( \Exception$error ) {
             return response()->json( ['message' => 'lỗi thông tin sản phẩm ' . $id], 404 );
         }
     }
@@ -83,12 +81,11 @@ class ProductController extends Controller
     public function update( ProductRequest $request, $id )
     {
         try {
-            $request->validated();
-            $category = $this->productRepository->update( $request->all(), $id );
+            $this->productRepository->update( $request->all(), $id );
 
-            response()->json( ['message' => 'đã cập nhật sản phẩm'], 200 );
-        } catch ( QueryException $error ) {
-            response()->json( ['message' => 'lỗi cập nhật sản phẩm', $id], 404 );
+            return response()->json( ['message' => 'đã cập nhật sản phẩm'], 200 );
+        } catch ( \Exception$error ) {
+            return response()->json( ['message' => 'lỗi cập nhật sản phẩm', $id], 500 );
         }
     }
 
@@ -102,8 +99,8 @@ class ProductController extends Controller
     {
         try {
             $this->productRepository->delete( $id );
-            return response()->json( ['message' => 'đã xoá'], 200 );
-        } catch ( QueryException $error ) {
+            return response()->noContent();
+        } catch ( \Exception$error ) {
             return response()->json( ['message' => 'lỗi xoá ' . $id], 404 );
         }
     }
